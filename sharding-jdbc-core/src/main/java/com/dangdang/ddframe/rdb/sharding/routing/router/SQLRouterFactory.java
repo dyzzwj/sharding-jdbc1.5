@@ -37,6 +37,9 @@ public final class SQLRouterFactory {
      * @return SQL路由器
      */
     public static SQLRouter createSQLRouter(final ShardingContext shardingContext) {
+        /**
+         * 判断当前是否只分库
+         */
         return HintManagerHolder.isDatabaseShardingOnly() ? new DatabaseHintSQLRouter(shardingContext) : new ParsingSQLRouter(shardingContext);
     }
 }

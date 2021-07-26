@@ -34,7 +34,28 @@ import java.util.List;
 
 /**
  * 表规则配置对象.
- * 
+ *  一个TableRule对象表示一个逻辑表的库表资源，其维护一个类型为DataNode的集合属性actualDataNodes，
+ *  这个DataNode集合表示此逻辑表对应的实际库表的集合
+ *
+ *
+ *   表的分布：
+ *   1、自定义分布。actualTable 为 ${dataSourceName}.${tableName} 时，即已经明确真实表所在数据源。
+ *      TableRule.builder("t_order").actualTables(Arrays.asList("db0.t_order_0", "db1.t_order_1", "db1.t_order_2"))
+ *      db0
+        └── t_order_0
+       db1
+        ├── t_order_1
+        └── t_order_2
+    2、均匀分布
+        TableRule.builder("t_order").actualTables(Arrays.asList("t_order_0", "t_order_1")).dataSourceRule(dataSourceRule).build()
+         db0
+         ├── t_order_0
+         └── t_order_1
+         db1
+         ├── t_order_0
+         └── t_order_1
+
+
  * @author zhangliang
  */
 @Getter
@@ -42,7 +63,7 @@ import java.util.List;
 public final class TableRule {
 
     /**
-     * 逻辑表
+     * 逻辑表  数据分片的逻辑表，对于水平拆分的数据库(表)，同一类表的总称
      */
     private final String logicTable;
     /**
@@ -53,6 +74,15 @@ public final class TableRule {
     /**
      * 数据分片节点
      * 由数据源名称和数据表组成
+     * TableRule 对 dataSourceRule(数据源名称) 只使用数据源名字，最终执行SQL 使用数据源名字从 ShardingRule 获取数据源连接
+     *
+     * 例如：现在有两个库db0、db1，每个库有三个表，逻辑表名为t_order， 那么TableRule对象的属性actualDataNodes则有6个元素：
+     * db0 t_order0
+     * db0 t_order1
+     * db0 t_order2
+     * db1 t_order0
+     * db1 t_order1
+     * db1 t_order2
      */
     private final List<DataNode> actualTables;
     /**

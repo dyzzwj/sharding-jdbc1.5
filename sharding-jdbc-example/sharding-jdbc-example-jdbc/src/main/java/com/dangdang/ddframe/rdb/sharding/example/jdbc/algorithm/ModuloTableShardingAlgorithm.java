@@ -28,37 +28,65 @@ import java.util.LinkedHashSet;
  * 余数基偶分表算法
  */
 public final class ModuloTableShardingAlgorithm implements SingleKeyTableShardingAlgorithm<Integer> {
-    
+
+    /**
+     * 计算分片
+     * 如果SQL中分表列order_id条件为where order_id=?
+     */
     @Override
     public String doEqualSharding(final Collection<String> tableNames, final ShardingValue<Integer> shardingValue) {
+        /**
+         *  分析前提，假设预期分到两个表中[t_order_0,t_order_1]， 表的分片键为order_id
+         *  且执行的SQL为SELECT o.* FROM t_order o where o.order_id=1001 AND o.user_id=10，那么分表列order_id的值为1001
+         */
+        //遍历表名[t_order_0,t_order_1]
         for (String each : tableNames) {
-            if (each.endsWith(shardingValue.getValue() % 2 + "")) {
+            //直到表名是以分表列order_id的值1001对2取模的值即1结尾，那么就是命中的表名，即t_order_1
+            if (each.endsWith(shardingValue.getValue() % tableNames.size() + "")) {
                 return each;
             }
         }
         throw new UnsupportedOperationException();
     }
-    
+
+
+    /**
+     * 如果SQL中分表列order_id条件为where order_id in(?, ?)
+     *
+     */
     @Override
     public Collection<String> doInSharding(final Collection<String> tableNames, final ShardingValue<Integer> shardingValue) {
         Collection<String> result = new LinkedHashSet<>(tableNames.size());
+        /**
+         * 从这里可知，doInSharding()和doEqualSharding()的区别就是doInSharding()时分表列有多个值（shardingValue.getValues()），
+         * 例如order_id的值为[1001,1002]，遍历这些值，然后每个值按照doEqualSharding()的逻辑计算表名
+         *
+         */
         for (Integer value : shardingValue.getValues()) {
             for (String tableName : tableNames) {
-                if (tableName.endsWith(value % 2 + "")) {
+                if (tableName.endsWith(value % tableNames.size() + "")) {
                     result.add(tableName);
                 }
             }
         }
         return result;
     }
-    
+
+    /**
+     * 如果SQL中分表列order_id条件为where order_id between in(?, ?)
+     */
     @Override
     public Collection<String> doBetweenSharding(final Collection<String> tableNames, final ShardingValue<Integer> shardingValue) {
         Collection<String> result = new LinkedHashSet<>(tableNames.size());
         Range<Integer> range = shardingValue.getValueRange();
+        /**
+         *  从这里可知，doBetweenSharding()和doInSharding()的区别就是doBetweenSharding()时分表列的多个值通过shardingValue.getValueRange()得到；
+         *  而doInSharding()是通过shardingValue.getValues()得到；
+         *
+         */
         for (Integer i = range.lowerEndpoint(); i <= range.upperEndpoint(); i++) {
             for (String each : tableNames) {
-                if (each.endsWith(i % 2 + "")) {
+                if (each.endsWith(i % tableNames.size() + "")) {
                     result.add(each);
                 }
             }

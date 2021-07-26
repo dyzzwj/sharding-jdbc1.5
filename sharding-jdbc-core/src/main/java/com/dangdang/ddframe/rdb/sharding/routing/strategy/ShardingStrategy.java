@@ -38,7 +38,7 @@ public class ShardingStrategy {
     @Getter
     private final Collection<String> shardingColumns;
     /**
-     * 分片算法
+     * 分片算法   分库策略里指的是库，在分表策略里指的是表。
      */
     private final ShardingAlgorithm shardingAlgorithm;
     
@@ -55,9 +55,9 @@ public class ShardingStrategy {
     /**
      * 计算静态分片.
      *
-     * @param availableTargetNames 所有的可用分片资源集合
+     * @param availableTargetNames 所有的可用分片资源（数据库或表）集合
      * @param shardingValues 分片值集合
-     * @return 分库后指向的数据源名称集合
+     * @return 分库、分表后指向的数据源名称集合
      */
     public Collection<String> doStaticSharding(final Collection<String> availableTargetNames, final Collection<ShardingValue<?>> shardingValues) {
         Collection<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
@@ -86,26 +86,51 @@ public class ShardingStrategy {
     /**
      * 计算分片
      *
-     * @param shardingValues 分片值集合
-     * @param availableTargetNames 所有的可用分片资源集合
-     * @return 分库后指向的分片资源集合
+     * @param shardingValues 分片值（分片键对应的值）集合
+     * @param availableTargetNames 所有的可用分片资源（数据库或表）集合
+     * @return 分片后指向的分片资源（数据库或表）集合
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private Collection<String> doSharding(final Collection<ShardingValue<?>> shardingValues, final Collection<String> availableTargetNames) {
+        /**
+         * shardingAlgorithm即sharding算法分为三种：NoneKey，SingleKey和MultipleKeys
+         */
+
         // 无片键
         if (shardingAlgorithm instanceof NoneKeyShardingAlgorithm) {
             return Collections.singletonList(((NoneKeyShardingAlgorithm) shardingAlgorithm).doSharding(availableTargetNames, shardingValues.iterator().next()));
         }
         // 单片键
         if (shardingAlgorithm instanceof SingleKeyShardingAlgorithm) {
+            // 得到SingleKeyShardingAlgorithm的具体实现，在ShardingStrategy的构造方法中赋值
             SingleKeyShardingAlgorithm<?> singleKeyShardingAlgorithm = (SingleKeyShardingAlgorithm<?>) shardingAlgorithm;
+            // ShardingValue就是sharding的列和该列的值，在这里分别为order_id和1000
             ShardingValue shardingValue = shardingValues.iterator().next();
+            /**
+             * sharding列的类型分为三种：SINGLE，LIST和RANGE
+             */
             switch (shardingValue.getType()) {
+                /**
+                 * 如果是where order_id=1000，那么type就是SINGLE
+                 */
                 case SINGLE:
+                    /**
+                     *  doEqualSharding只返回一个值，为了doSharding()返回值的统一，用Collections.singletonList()包装成集合；
+                     */
                     return Collections.singletonList(singleKeyShardingAlgorithm.doEqualSharding(availableTargetNames, shardingValue));
+
+
+                /**
+                 * 如果SQL中分表列order_id条件为where order_id in(?, ?)，
+                 */
                 case LIST:
                     return singleKeyShardingAlgorithm.doInSharding(availableTargetNames, shardingValue);
+
+                /**
+                 * 如果SQL中分表列order_id条件为where order_id between in(?, ?)
+                 */
                 case RANGE:
+
                     return singleKeyShardingAlgorithm.doBetweenSharding(availableTargetNames, shardingValue);
                 default:
                     throw new UnsupportedOperationException(shardingValue.getType().getClass().getName());

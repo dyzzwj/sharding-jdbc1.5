@@ -57,14 +57,23 @@ public final class ShardingRule {
     private final Collection<TableRule> tableRules;
     /**
      * 绑定表配置规则
+     * 指在任何场景下分片规则均一致的主表和子表。
+     * 不支持传递关系：配置 BindingTableRule 时，相同绑定关系一定要配置在一条，必须是 [a, b, c]，而不能是 [a, b], [b, c]。
+     * 例：订单表和订单项表，均按照订单ID分片，则此两张表互为BindingTable关系。
+     * BindingTable关系的多表关联查询不会出现笛卡尔积关联，关联查询效率将大大提升
+     * 绑定表需遵守的规则：
+     *  分片策略与算法相同
+     *  数据源配置对象相同
+     *  真实表数量相同
+     *
      */
     private final Collection<BindingTableRule> bindingTableRules;
     /**
-     * 默认分库策略
+     * 分库策略
      */
     private final DatabaseShardingStrategy databaseShardingStrategy;
     /**
-     * 默认分表策略
+     * 分表策略
      */
     private final TableShardingStrategy tableShardingStrategy;
     /**
@@ -101,8 +110,14 @@ public final class ShardingRule {
         this.dataSourceRule = dataSourceRule;
         this.tableRules = null == tableRules ? Collections.<TableRule>emptyList() : tableRules;
         this.bindingTableRules = null == bindingTableRules ? Collections.<BindingTableRule>emptyList() : bindingTableRules;
+        /**
+         * 未设置分库策略 默认为NoneKeyDatabaseShardingAlgorithm
+         */
         this.databaseShardingStrategy = null == databaseShardingStrategy ? new DatabaseShardingStrategy(
                 Collections.<String>emptyList(), new NoneDatabaseShardingAlgorithm()) : databaseShardingStrategy;
+        /**
+         * 未设置分表策略默认为 NoneTableShardingAlgorithm
+         */
         this.tableShardingStrategy = null == tableShardingStrategy ? new TableShardingStrategy(
                 Collections.<String>emptyList(), new NoneTableShardingAlgorithm()) : tableShardingStrategy;
         this.keyGenerator = keyGenerator;
@@ -140,6 +155,7 @@ public final class ShardingRule {
      * @return 该逻辑表的分片规则
      */
     public TableRule getTableRule(final String logicTableName) {
+        //根据逻辑表名称查找分片规则
         Optional<TableRule> tableRule = tryFindTableRule(logicTableName);
         if (tableRule.isPresent()) {
             return tableRule.get();
@@ -194,7 +210,9 @@ public final class ShardingRule {
      * @return 是否全部属于Binding表
      */
     public boolean isAllBindingTables(final Collection<String> logicTables) {
+        //先过滤出所有的Binding表名称.
         Collection<String> bindingTables = filterAllBindingTables(logicTables);
+        //所有的Binding表名称是否包含当前的逻辑表
         return !bindingTables.isEmpty() && bindingTables.containsAll(logicTables);
     }
 
@@ -219,7 +237,7 @@ public final class ShardingRule {
     }
 
     /**
-     * 获得包含<strong>任一</strong>在逻辑表名称集合的binding表配置的逻辑表名称集合
+     * 获得包含任一在逻辑表名称集合的binding表配置的逻辑表名称集合
      *
      * @param logicTables 逻辑表名称集合
      * @return binding表配置的逻辑表名称集合

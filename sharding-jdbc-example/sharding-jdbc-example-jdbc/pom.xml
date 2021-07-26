@@ -6,4 +6,13 @@
         <version>1.5.1-SNAPSHOT</version>
     </parent>
     <artifactId>sharding-jdbc-example-jdbc</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.12</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 </project>

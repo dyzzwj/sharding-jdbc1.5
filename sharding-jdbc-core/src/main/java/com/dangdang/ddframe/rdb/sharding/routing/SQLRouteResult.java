@@ -37,15 +37,15 @@ import java.util.Set;
 public final class SQLRouteResult {
 
     /**
-     * SQL语句对象
+     * SQL语句对象 经过SQL解析的结果对象
      */
     private final SQLStatement sqlStatement;
     /**
-     * SQL最小执行单元集合
+     * SQL最小执行单元集合 SQL执行时，执行每个单元
      */
     private final Set<SQLExecutionUnit> executionUnits = new LinkedHashSet<>();
     /**
-     * 生成主键编号
+     * 生成主键编号 插入SQL语句生成的主键编号集合。目前不支持批量插入而使用集合的原因，猜测是为了未来支持批量插入做准备。
      */
     private final List<Number> generatedKeys = new LinkedList<>();
 }

@@ -17,15 +17,14 @@
 
 package com.dangdang.ddframe.rdb.sharding.api;
 
-import java.util.Collection;
-import java.util.Collections;
-
+import com.google.common.collect.Range;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
-import com.google.common.collect.Range;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * 分片值.
@@ -41,15 +40,26 @@ import com.google.common.collect.Range;
 @Getter
 @ToString
 public final class ShardingValue<T extends Comparable<?>> {
-    
+
+    //逻辑表
     private final String logicTableName;
-    
+
+    //列名
     private final String columnName;
-    
+
+    /**
+     * 如果是where order_id=1000，那么type就是SINGLE
+     */
     private final T value;
-    
+
+    /**
+     * 如果SQL中分表列order_id条件为where order_id in(?, ?)
+     */
     private final Collection<T> values;
-    
+
+    /**
+     * 如果SQL中分表列order_id条件为where order_id between in(?, ?)
+     */
     private final Range<T> valueRange;
     
     public ShardingValue(final String logicTableName, final String columnName, final T value) {

@@ -40,6 +40,9 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * SQL解析引擎.
+ * SQLParsingEngine 调用 StatementParser 解析 SQL。
+ * StatementParser 调用 SQLParser 解析 SQL 表达式。
+ * SQLParser 调用 Lexer 解析 SQL 词法。
  *
  * @author zhangliang
  */

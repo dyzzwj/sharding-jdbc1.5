@@ -25,11 +25,23 @@ import lombok.RequiredArgsConstructor;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
+/**
+ * 单片键动态计算分片算法
+ */
 @RequiredArgsConstructor
 public final class SingleKeyDynamicModuloTableShardingAlgorithm implements SingleKeyTableShardingAlgorithm<Integer> {
-    
+
+    /**
+     * 表前缀  动态表无需把真实表配置到 TableRule，而是通过分片算法计算出真实表。
+     */
     private final String tablePrefix;
-    
+
+    /**
+     *  availableTargetNames:动态表都不会使用availableTargetNames这个参数
+     * @param availableTargetNames 所有的可用目标名称集合, 一般是数据源或表名称
+     * @param shardingValue 分片值
+     * @return
+     */
     @Override
     public String doEqualSharding(final Collection<String> availableTargetNames, final ShardingValue<Integer> shardingValue) {
         return tablePrefix + shardingValue.getValue() % 10;

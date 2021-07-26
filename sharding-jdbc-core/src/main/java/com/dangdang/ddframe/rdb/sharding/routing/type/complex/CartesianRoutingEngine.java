@@ -37,16 +37,20 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 /**
- * 笛卡尔积的库表路由.
+ * 笛卡尔积的库表路由. 同库 才可以进行笛卡尔积
  * 
  * @author zhangliang
  */
 @RequiredArgsConstructor
 @Slf4j
 public final class CartesianRoutingEngine implements RoutingEngine {
-    
+
+    /**
+     * ComplexRoutingEngine 计算每个逻辑表的简单路由分片，
+     */
     private final Collection<RoutingResult> routingResults;
-    
+
+
     @Override
     public CartesianRoutingResult route() {
         CartesianRoutingResult result = new CartesianRoutingResult();
@@ -93,6 +97,7 @@ public final class CartesianRoutingEngine implements RoutingEngine {
             if (result.isEmpty()) {
                 result.addAll(each.getTableUnits().getDataSourceNames());
             }
+            //取交集
             result.retainAll(each.getTableUnits().getDataSourceNames()); // 交集
         }
         return result;

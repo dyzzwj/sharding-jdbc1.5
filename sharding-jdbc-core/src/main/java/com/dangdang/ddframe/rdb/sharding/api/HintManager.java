@@ -45,7 +45,10 @@ public final class HintManager implements AutoCloseable {
      * 库分片值集合
      */
     private final Map<ShardingKey, ShardingValue<?>> databaseShardingValues = new HashMap<>();
-    
+
+    /**
+     * 表分片值集合
+     */
     private final Map<ShardingKey, ShardingValue<?>> tableShardingValues = new HashMap<>();
 
     /**
@@ -66,7 +69,7 @@ public final class HintManager implements AutoCloseable {
     
     /**
      * 获取线索分片管理器实例.
-     * 
+     *  每次获取到的都是新的 HintManager，多次赋值需要小心。
      * @return 线索分片管理器实例
      */
     public static HintManager getInstance() {
@@ -138,7 +141,10 @@ public final class HintManager implements AutoCloseable {
         shardingHint = true;
         tableShardingValues.put(new ShardingKey(logicTable, shardingColumn), getShardingValue(logicTable, shardingColumn, operator, values));
     }
-    
+
+    /**
+     * sharding列只支持=，in和between的操作：
+     */
     @SuppressWarnings("unchecked")
     private ShardingValue getShardingValue(final String logicTable, final String shardingColumn, final ShardingOperator operator, final Comparable<?>[] values) {
         Preconditions.checkArgument(null != values && values.length > 0);
@@ -180,7 +186,10 @@ public final class HintManager implements AutoCloseable {
     public void setMasterRouteOnly() {
         masterRouteOnly = true;
     }
-    
+
+    /**
+     * 使用完需要去清理，避免下个请求读到遗漏的线程变量。
+     */
     @Override
     public void close() {
         HintManagerHolder.clear();

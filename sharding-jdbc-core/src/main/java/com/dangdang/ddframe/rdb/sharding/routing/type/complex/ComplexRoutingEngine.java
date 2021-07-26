@@ -38,9 +38,8 @@ import java.util.TreeSet;
 
 /**
  * 混合多库表路由引擎.
- * 
- * @author gaohongtao
- * @author zhangliang
+ * ComplexRoutingEngine 根据路由结果会转化成 SimpleRoutingEngine 或 ComplexRoutingEngine
+ *
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -53,7 +52,11 @@ public final class ComplexRoutingEngine implements RoutingEngine {
     private final Collection<String> logicTables;
     
     private final SQLStatement sqlStatement;
-    
+
+    /**
+     * ComplexRoutingEngine 计算每个逻辑表的简单路由分片，路由结果交给 CartesianRoutingEngine 继续路由形成笛卡尔积结果。
+     * @return
+     */
     @Override
     public RoutingResult route() {
         Collection<RoutingResult> result = new ArrayList<>(logicTables.size());
@@ -63,6 +66,9 @@ public final class ComplexRoutingEngine implements RoutingEngine {
             Optional<TableRule> tableRule = shardingRule.tryFindTableRule(each);
             if (tableRule.isPresent()) {
                 if (!bindingTableNames.contains(each)) {
+                    /**
+                     *  计算每个逻辑表的简单路由分片
+                     */
                     result.add(new SimpleRoutingEngine(shardingRule, parameters, tableRule.get().getLogicTable(), sqlStatement).route());
                 }
                 // 互为 BindingTable 关系的表加到 bindingTableNames 里，不重复计算分片

@@ -67,7 +67,13 @@ public final class ParsingSQLRouter implements SQLRouter {
         showSQL = shardingContext.isShowSQL();
         generatedKeys = new LinkedList<>();
     }
-    
+
+    /**
+     * sql解析
+     * @param logicSQL 逻辑SQL
+     * @param parametersSize 参数个数
+     * @return
+     */
     @Override
     public SQLStatement parse(final String logicSQL, final int parametersSize) {
         SQLParsingEngine parsingEngine = new SQLParsingEngine(databaseType, logicSQL, shardingRule);
@@ -79,7 +85,10 @@ public final class ParsingSQLRouter implements SQLRouter {
         MetricsContext.stop(context);
         return result;
     }
-    
+
+    /**
+     * 需要解析的SQL路由器
+     */
     @Override
     public SQLRouteResult route(final String logicSQL, final List<Object> parameters, final SQLStatement sqlStatement) {
         final Context context = MetricsContext.start("Route SQL");
@@ -88,7 +97,9 @@ public final class ParsingSQLRouter implements SQLRouter {
         if (sqlStatement instanceof InsertStatement && null != ((InsertStatement) sqlStatement).getGeneratedKey()) {
             processGeneratedKey(parameters, (InsertStatement) sqlStatement, result);
         }
-        // 路由
+        /**
+         * 路由
+         */
         RoutingResult routingResult = route(parameters, sqlStatement);
         // SQL重写引擎
         SQLRewriteEngine rewriteEngine = new SQLRewriteEngine(shardingRule, logicSQL, sqlStatement);
@@ -129,7 +140,17 @@ public final class ParsingSQLRouter implements SQLRouter {
     private RoutingResult route(final List<Object> parameters, final SQLStatement sqlStatement) {
         Collection<String> tableNames = sqlStatement.getTables().getTableNames();
         RoutingEngine routingEngine;
+        /**
+         *  如果sql中只有一个表名，或者多个表名之间是绑定表关系，或者所有表都在默认数据源指定的数据库中（即不参与分库分表的表），
+         *  那么用SimpleRoutingEngine作为路由判断引擎；多表互为BindingTable关系时，每张表的路由结果是相同的，所以只要计算第一张表的分片即可。
+         */
         if (1 == tableNames.size() || shardingRule.isAllBindingTables(tableNames)) {
+            /**
+             * tableNames.iterator().next() 注意下，tableNames 变量是 new TreeSet<>(String.CASE_INSENSITIVE_ORDER)。
+             * 所以 SELECT * FROM t_order o join t_order_item i ON o.order_id = i.order_id 即使 t_order_item 排在 t_order 前面，
+             * tableNames.iterator().next() 返回的是 t_order。当 t_order 和 t_order_item 为 BindingTable关系 时，计算的是 t_order 路由分片
+             * TreeSet的排序
+             */
             routingEngine = new SimpleRoutingEngine(shardingRule, parameters, tableNames.iterator().next(), sqlStatement);
         } else {
             // TODO 可配置是否执行笛卡尔积

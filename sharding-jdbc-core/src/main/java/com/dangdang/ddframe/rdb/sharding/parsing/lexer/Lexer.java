@@ -26,9 +26,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * 词法解析器.
+ * 词法解析器. 顺序解析sql 由于不同数据库遵守 SQL 规范略有不同，所以不同的数据库对应不同的 Lexer
+ * 只做词法的解析，不关注上下文，将字符串拆解成 N 个词法
  *
- * @author zhangliang
+ * SQL ：SELECT * FROM t_user
+ * Lexer ：[SELECT] [ * ] [FROM] [t_user]
+ * Parser ：这是一条 [SELECT] 查询表为 [t_user] ，并且返回 [ * ] 所有字段的 SQL。
+ *
  */
 @RequiredArgsConstructor
 public class Lexer {
@@ -55,9 +59,7 @@ public class Lexer {
 
     /**
      * 分析下一个词法标记.
-     *
-     * @see #currentToken
-     * @see #offset
+     *使用 #skipIgnoredToken() 方法跳过忽略的 Token，通过 #isXXXX() 方法判断好下一个 Token 的类型后，交给 Tokenizer 进行分词返回 Token
      */
     public final void nextToken() {
         skipIgnoredToken();

@@ -65,6 +65,7 @@ public final class DatabaseHintRoutingEngine implements RoutingEngine {
         // 路由结果
         RoutingResult result = new RoutingResult();
         for (String each : routingDataSources) {
+            //new TableUnit(each, "", "") 的 logicTableName，actualTableName 都是空串   无分表操作
             result.getTableUnits().getTableUnits().add(new TableUnit(each, "", ""));
         }
         return result;

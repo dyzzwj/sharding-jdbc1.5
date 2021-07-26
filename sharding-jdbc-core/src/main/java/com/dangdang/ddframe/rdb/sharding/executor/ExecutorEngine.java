@@ -94,6 +94,9 @@ public final class ExecutorEngine implements AutoCloseable {
      */
     public <T> List<T> executePreparedStatement(
             final SQLType sqlType, final Collection<PreparedStatementUnit> preparedStatementUnits, final List<Object> parameters, final ExecuteCallback<T> executeCallback) {
+        /**
+         *     // preparedStatementUnits就是前面路由分析结果：执行SQL select o.* from t_order o where o.user_id=10时，只需在ds_jdbc_0这个数据源中的t_order_0和t_order_1两个实际表中执行即可；
+         */
         return execute(sqlType, preparedStatementUnits, Collections.singletonList(parameters), executeCallback);
     }
     
@@ -127,13 +130,17 @@ public final class ExecutorEngine implements AutoCloseable {
             return Collections.emptyList();
         }
         Iterator<? extends BaseStatementUnit> iterator = baseStatementUnits.iterator();
+        //第一个任务分离出来
         BaseStatementUnit firstInput = iterator.next();
         // 第二个任务开始所有 SQL任务 提交线程池【异步】执行任务
         ListenableFuture<List<T>> restFutures = asyncExecute(sqlType, Lists.newArrayList(iterator), parameterSets, executeCallback);
         T firstOutput;
         List<T> restOutputs;
         try {
-            // 第一个任务【同步】执行任务
+            /**
+             *  第一个任务【同步】执行任务 [猜测是不是考虑到分库分表后只需路由到一个数据源中的一个表的SQL执行性能问题，优化这种SQL执行为同步执行？
+             *  分库分表后，面向用户的API占用了99%的请求量，而这些API对应的SQL 99%只需要在一个数据源上的一个实际表执行即可，例如根据订单表根据user_id分库分表后，查询用户的订单信息这种场景]
+             */
             firstOutput = syncExecute(sqlType, firstInput, parameterSets, executeCallback);
             // 等待第二个任务开始所有 SQL任务完成
             restOutputs = restFutures.get();
@@ -145,6 +152,7 @@ public final class ExecutorEngine implements AutoCloseable {
         }
         // 返回结果
         List<T> result = Lists.newLinkedList(restOutputs);
+        //将第一个任务同步执行结果与其他任务异步执行结果合并就是最终的结果
         result.add(0, firstOutput);
         return result;
     }

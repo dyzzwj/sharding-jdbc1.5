@@ -50,22 +50,41 @@ public final class DatabaseHintSQLRouter implements SQLRouter {
         shardingRule = shardingContext.getShardingRule();
         showSQL = shardingContext.isShowSQL();
     }
-    
+
+
+    /**
+     * sql解析
+     * @param logicSQL 逻辑SQL
+     * @param parametersSize 参数个数
+     * @return
+     */
     @Override
     public SQLStatement parse(final String logicSQL, final int parametersSize) {
-        return new SQLJudgeEngine(logicSQL).judge(); // 只解析 SQL 类型
+        /**
+         *  只解析 SQL 类型 即 SELECT / UPDATE / DELETE / INSERT
+         */
+        return new SQLJudgeEngine(logicSQL).judge();
     }
     
     @Override
     // TODO insert的SQL仍然需要解析自增主键
+    /**
+     * 通过提示且仅路由至数据库的SQL路由器
+     * 目前不支持 Sharding-JDBC 的主键自增
+     */
     public SQLRouteResult route(final String logicSQL, final List<Object> parameters, final SQLStatement sqlStatement) {
         Context context = MetricsContext.start("Route SQL");
         SQLRouteResult result = new SQLRouteResult(sqlStatement);
         // 路由
+        //使用的分库策略来自 ShardingRule，不是 TableRule 因为 SQL 未解析表名。因此，即使在 TableRule 设置了 actualTables 属性也是没有效果的。
         RoutingResult routingResult = new DatabaseHintRoutingEngine(shardingRule.getDataSourceRule(), shardingRule.getDatabaseShardingStrategy())
                 .route();
         // SQL最小执行单元
         for (TableUnit each : routingResult.getTableUnits().getTableUnits()) {
+            /**
+             * HintManager.getInstance().setDatabaseShardingValue(库分片值) 设置的库分片值使用的是 EQUALS，
+             * 因而分库策略计算出来的只有一个库分片，即 TableUnit 只有一个，SQLExecutionUnit 只有一个
+             */
             result.getExecutionUnits().add(new SQLExecutionUnit(each.getDataSourceName(), logicSQL));
         }
         MetricsContext.stop(context);
