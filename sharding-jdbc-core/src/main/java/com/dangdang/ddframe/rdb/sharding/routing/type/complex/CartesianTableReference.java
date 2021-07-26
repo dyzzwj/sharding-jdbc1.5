@@ -33,6 +33,9 @@ import java.util.List;
 @Getter
 @ToString
 public final class CartesianTableReference {
-    
+
+    /**
+     *  某个逻辑表的真实表集合组对应的TableUnit集合组
+     */
     private final List<TableUnit> tableUnits;
 }

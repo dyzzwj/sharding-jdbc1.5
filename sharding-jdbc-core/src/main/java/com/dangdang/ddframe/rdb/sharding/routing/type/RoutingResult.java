@@ -29,6 +29,8 @@ public class RoutingResult {
 
     /**
      * 路由表单元集合
+     *  dataSourceName--数据源名称，logicTableName--逻辑表名称，actualTableName--实际表名称，
+     *  例如：TableUnit:{dataSourceName:ds_jdbc_1, logicTableName:t_order, actualTableName: t_order_1}
      */
     private final TableUnits tableUnits = new TableUnits();
     

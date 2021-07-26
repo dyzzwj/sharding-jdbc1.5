@@ -32,9 +32,18 @@ import java.util.List;
 @Getter
 @ToString
 public final class CartesianDataSource {
-    
+
+    /**
+     * 数据源
+     */
     private final String dataSource;
-    
+
+    /**
+     *  相同数据源的属于某个逻辑表的真实表集合组对应的TableUnit集合组
+     *  1、数据源相同
+     *  2、每个元素CartesianTableReference代表数据某个逻辑表的真实表集合组对应的TableUnit集合组
+     *
+     */
     private final List<CartesianTableReference> routingTableReferences;
     
     CartesianDataSource(final String dataSource, final CartesianTableReference routingTableReference) {

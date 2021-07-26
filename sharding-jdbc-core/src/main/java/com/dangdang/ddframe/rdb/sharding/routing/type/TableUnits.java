@@ -89,8 +89,10 @@ public final class TableUnits {
     public List<Set<String>> getActualTableNameGroups(final String dataSourceName, final Set<String> logicTableNames) {
         List<Set<String>> result = new ArrayList<>();
         for (String logicTableName : logicTableNames) {
+            //获取逻辑表对应的真实表集合
             Set<String> actualTableNames = getActualTableNames(dataSourceName, logicTableName);
             if (!actualTableNames.isEmpty()) {
+
                 result.add(actualTableNames);
             }
         }
@@ -117,6 +119,8 @@ public final class TableUnits {
     public Map<String, Set<String>> getDataSourceLogicTablesMap(final Collection<String> dataSourceNames) {
         Map<String, Set<String>> result = new HashMap<>();
         for (String each : dataSourceNames) {
+            //获取该数据源下 逻辑表名称集合
+            //ds1 - [t_order,t_order_item]
             Set<String> logicTableNames = getLogicTableNames(each);
             if (!logicTableNames.isEmpty()) {
                 result.put(each, logicTableNames);

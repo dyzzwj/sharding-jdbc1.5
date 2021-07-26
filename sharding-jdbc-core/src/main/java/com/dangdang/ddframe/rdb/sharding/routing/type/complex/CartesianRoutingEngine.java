@@ -46,7 +46,16 @@ import java.util.Set;
 public final class CartesianRoutingEngine implements RoutingEngine {
 
     /**
-     * ComplexRoutingEngine 计算每个逻辑表的简单路由分片，
+     * ComplexRoutingEngine 计算出的每个逻辑表的简单路由分片，
+     * routingResults[0] 是t_order表的简单路由分片
+     * routingResults[1] 是t_order_item表的简单路由分片
+     *
+     *
+     *   db1.t_order_1              db1.t_order_1
+     *   db1.t_order_2              db1.t_order_2
+     *   db2.t_order_1              db2.t_order_1
+     *   db2.t_order_2              db2.t_order_2
+     *
      */
     private final Collection<RoutingResult> routingResults;
 
@@ -54,11 +63,29 @@ public final class CartesianRoutingEngine implements RoutingEngine {
     @Override
     public CartesianRoutingResult route() {
         CartesianRoutingResult result = new CartesianRoutingResult();
+        /**
+         * getDataSourceLogicTablesMap: 获得同库对应的逻辑表集合 Entry<数据源（库）, Set<逻辑表>> entry。
+         * ds1 - [t_order,t_order_item]
+         */
         for (Entry<String, Set<String>> entry : getDataSourceLogicTablesMap().entrySet()) { // Entry<数据源（库）, Set<逻辑表>> entry
-            // 获得当前数据源（库）的 路由表单元分组
+            // 根据数据源和逻辑表名称获取真实表集合组
             List<Set<String>> actualTableGroups = getActualTableGroups(entry.getKey(), entry.getValue()); // List<Set<真实表>>
+            /**
+             *
+             *  遍历数据源（库），获得当前数据源（库）的路由表单元分组。
+             *
+             * List<Set<String>> actualTableGroups: 每个元素是当前数据源 逻辑表对应的真实表集合组
+             * List<Set<TableUnit>> tableUnitGroups:每个元素是当前数据源 属于某个逻辑表的真实表集合组对应的TableUnit集合组
+             *
+             *   actualTableGroups和tableUnitGroups相同索引是一一对应的
+             *
+             */
             List<Set<TableUnit>> tableUnitGroups = toTableUnitGroups(entry.getKey(), actualTableGroups);
-            // 笛卡尔积，并合并结果
+
+            /**
+             *  笛卡尔积，并合并结果
+             *  同库 才可以进行笛卡尔积
+             */
             result.merge(entry.getKey(), getCartesianTableReferences(Sets.cartesianProduct(tableUnitGroups)));
         }
         log.trace("cartesian tables sharding result: {}", result);
@@ -71,11 +98,19 @@ public final class CartesianRoutingEngine implements RoutingEngine {
      * @return 同库对应的逻辑表集合
      */
     private Map<String, Set<String>> getDataSourceLogicTablesMap() {
+        //获得所有路由结果里的数据源（库）交集 ds1,ds2
         Collection<String> intersectionDataSources = getIntersectionDataSources();
         Map<String, Set<String>> result = new HashMap<>(routingResults.size());
         // 获得同库对应的逻辑表集合
         for (RoutingResult each : routingResults) {
+            /**
+             * each.getTableUnits().getDataSourceLogicTablesMap:获取数据源和逻辑表名称集合的映射关系.
+             *  k - 数据源名称
+             *  v - 该数据源下的逻辑表集合
+             *  ds1 - [t_order,t_order_item]
+             */
             for (Entry<String, Set<String>> entry : each.getTableUnits().getDataSourceLogicTablesMap(intersectionDataSources).entrySet()) { // 过滤掉不在数据源（库）交集的逻辑表
+
                 if (result.containsKey(entry.getKey())) {
                     result.get(entry.getKey()).addAll(entry.getValue());
                 } else {
@@ -102,7 +137,8 @@ public final class CartesianRoutingEngine implements RoutingEngine {
         }
         return result;
     }
-    
+
+
     private List<Set<String>> getActualTableGroups(final String dataSource, final Set<String> logicTables) {
         List<Set<String>> result = new ArrayList<>(logicTables.size());
         for (RoutingResult each : routingResults) {
@@ -114,6 +150,8 @@ public final class CartesianRoutingEngine implements RoutingEngine {
     private List<Set<TableUnit>> toTableUnitGroups(final String dataSource, final List<Set<String>> actualTableGroups) {
         List<Set<TableUnit>> result = new ArrayList<>(actualTableGroups.size());
         for (Set<String> each : actualTableGroups) {
+            //根据数据源和真实表名查找TableUnit
+
             result.add(new HashSet<>(Lists.transform(new ArrayList<>(each), new Function<String, TableUnit>() {
     
                 @Override
@@ -137,7 +175,9 @@ public final class CartesianRoutingEngine implements RoutingEngine {
     
     private List<CartesianTableReference> getCartesianTableReferences(final Set<List<TableUnit>> cartesianTableUnitGroups) {
         List<CartesianTableReference> result = new ArrayList<>(cartesianTableUnitGroups.size());
+
         for (List<TableUnit> each : cartesianTableUnitGroups) {
+            //CartesianTableReference:某个逻辑表的真实表集合组对应的TableUnit集合组
             result.add(new CartesianTableReference(each));
         }
         return result;

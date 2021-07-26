@@ -78,6 +78,8 @@ public final class SimpleRoutingEngine implements RoutingEngine {
         for (String each : routedDataSources) {
             /**
              *  // 再根据规则路由表：即根据order_id取模路由
+             *   k - datasource
+             *   v - datasource对应的表集合  目前这些表集合是根据分片规则计算出来的 对应的真实数据表不一定存在
              */
             routedMap.put(each, routeTables(tableRule, each));
         }
@@ -171,7 +173,7 @@ public final class SimpleRoutingEngine implements RoutingEngine {
     private RoutingResult generateRoutingResult(final TableRule tableRule, final Map<String, Collection<String>> routedMap) {
         RoutingResult result = new RoutingResult();
         for (Entry<String, Collection<String>> entry : routedMap.entrySet()) {
-            //根据数据源名称过滤获取真实数据单元.
+            //根据数据源名称过滤（根据分片规则计算出来的数据表不一定真实存在）获取真实数据单元.
             Collection<DataNode> dataNodes = tableRule.getActualDataNodes(entry.getKey(), entry.getValue());
             for (DataNode each : dataNodes) {
                 result.getTableUnits().getTableUnits().add(new TableUnit(each.getDataSourceName(), logicTableName, each.getTableName()));

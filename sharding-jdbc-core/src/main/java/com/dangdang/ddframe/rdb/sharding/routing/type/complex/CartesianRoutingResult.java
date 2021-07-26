@@ -34,23 +34,34 @@ import java.util.List;
  */
 @ToString
 public final class CartesianRoutingResult extends RoutingResult {
-    
+
+    /**
+     *  routingDataSources
+     *  每个元素 对应的是不同的数据源
+     */
     @Getter
     private final List<CartesianDataSource> routingDataSources = new ArrayList<>();
     
     void merge(final String dataSource, final Collection<CartesianTableReference> routingTableReferences) {
         for (CartesianTableReference each : routingTableReferences) {
+            //each:属于某个逻辑表的真实表集合组对应的TableUnit集合组
             merge(dataSource, each);
         }
     }
     
     private void merge(final String dataSource, final CartesianTableReference routingTableReference) {
         for (CartesianDataSource each : routingDataSources) {
+            //数据源相同
             if (each.getDataSource().equalsIgnoreCase(dataSource)) {
+                /**
+                 * 把相同数据源的属于某个逻辑表的真实表集合组对应的TableUnit集合组
+                 */
                 each.getRoutingTableReferences().add(routingTableReference);
                 return;
             }
         }
+
+        //不同数据源
         routingDataSources.add(new CartesianDataSource(dataSource, routingTableReference));
     }
     
