@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 自增主键标记对象.
+ * 插入SQL自增列不存在：INSERT INTO t_order(nickname) VALUES ... 中没有自增列 order_id
  *
  * @author zhangliang
  */

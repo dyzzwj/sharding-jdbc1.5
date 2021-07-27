@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 排序标记对象.
  *
- *
+ * 有 GROUP BY 条件，无 ORDER BY 条件：SELECT COUNT(*) FROM t_order GROUP BY order_id 的 order_id
  * @author zhangliang
  */
 @RequiredArgsConstructor

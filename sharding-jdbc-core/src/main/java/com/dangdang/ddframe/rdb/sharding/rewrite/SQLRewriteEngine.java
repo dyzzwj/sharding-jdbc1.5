@@ -84,6 +84,11 @@ public final class SQLRewriteEngine {
         int count = 0;
         // 排序SQLToken，按照 beginPosition 递增
         sortByBeginPosition();
+        /**
+         * SQL改写以 SQLToken 为间隔，顺序改写。
+         * 顺序：调用 #sortByBeginPosition() 将 SQLToken 按照 beginPosition 升序。
+         * 间隔：遍历 SQLToken，逐个拼接。
+         */
         for (SQLToken each : sqlTokens) {
             if (0 == count) { // 拼接第一个 SQLToken 前的字符串
                 result.appendLiterals(originalSQL.substring(0, each.getBeginPosition()));
@@ -125,6 +130,9 @@ public final class SQLRewriteEngine {
      */
     private void appendTableToken(final SQLBuilder sqlBuilder, final TableToken tableToken, final int count, final List<SQLToken> sqlTokens) {
         // 拼接 TableToken
+        /**
+         * sqlStatement.getTables().getTableNames().contains(tableToken.getTableName()) 目的是处理掉表名前后有的特殊字符，例如SELECT * FROM 't_order' 中 t_order 前后有 ' 符号。
+         */
         String tableName = sqlStatement.getTables().getTableNames().contains(tableToken.getTableName()) ? tableToken.getTableName() : tableToken.getOriginalLiterals();
         sqlBuilder.appendTable(tableName);
         // SQLToken 后面的字符串
@@ -167,6 +175,11 @@ public final class SQLRewriteEngine {
         Limit limit = selectStatement.getLimit();
         if (!isRewrite) { // 路由结果为单分片
             sqlBuilder.appendLiterals(String.valueOf(rowCountToken.getRowCount()));
+            /**
+             * [1.1] !selectStatement.getGroupByItems().isEmpty() 跨分片分组需要在内存计算，可能需要全部加载。如果不全部加载，部分结果被分页条件错误结果，会导致结果不正确。
+             * [1.2] !selectStatement.getAggregationSelectItems().isEmpty()) 跨分片聚合列需要在内存计算，可能需要全部加载。如果不全部加载，部分结果被分页条件错误结果，会导致结果不正确。
+             * [1.1][1.2]，可能变成必须的前提是 GROUP BY 和 ORDER BY 排序不一致。如果一致，各分片已经排序完成，无需内存中排序。
+             */
         } else if ((!selectStatement.getGroupByItems().isEmpty() || // [1.1] 跨分片分组需要在内存计算，可能需要全部加载
                 !selectStatement.getAggregationSelectItems().isEmpty()) // [1.2] 跨分片聚合列需要在内存计算，可能需要全部加载
                 && !selectStatement.isSameGroupByAndOrderByItems()) { // [2] 如果排序一致，即各分片已经排序好结果，就不需要全部加载
@@ -191,6 +204,10 @@ public final class SQLRewriteEngine {
      */
     private void appendLimitOffsetToken(final SQLBuilder sqlBuilder, final OffsetToken offsetToken, final int count, final List<SQLToken> sqlTokens, final boolean isRewrite) {
         // 拼接 OffsetToken
+        /**
+         * 当分页跨分片时，需要每个分片都查询后在内存中进行聚合。此时 isRewrite = true。为什么是 "0" 开始呢？每个分片在 [0, offset) 的记录可能属于实际分页结果，因而查询每个分片需要从 0 开始。
+         * 当分页单分片时，则无需重写，该分片执行的结果即是最终结果。SQL改写在SQL路由之后就有这个好处。如果先改写，因为没办法知道最终是单分片还是跨分片，考虑正确性，只能统一使用跨分片
+         */
         sqlBuilder.appendLiterals(isRewrite ? "0" : String.valueOf(offsetToken.getOffset()));
         // SQLToken 后面的字符串
         int beginPosition = offsetToken.getBeginPosition() + String.valueOf(offsetToken.getOffset()).length();
@@ -204,6 +221,12 @@ public final class SQLRewriteEngine {
      * @param sqlBuilder SQL构建器
      */
     private void appendOrderByToken(final SQLBuilder sqlBuilder) {
+        /**
+         * 数据库里，当无 ORDER BY条件 而有 GROUP BY 条件时候，会使用 GROUP BY条件将结果升序排序：
+         *
+         * SELECT order_id FROM t_order GROUP BY order_id 等价于 SELECT order_id FROM t_order GROUP BY order_id ORDER BY order_id ASC
+         * SELECT order_id FROM t_order GROUP BY order_id DESC 等价于 SELECT order_id FROM t_order GROUP BY order_id ORDER BY order_id DESC
+         */
         SelectStatement selectStatement = (SelectStatement) sqlStatement;
         // 拼接 OrderByToken
         StringBuilder orderByLiterals = new StringBuilder(" ORDER BY ");

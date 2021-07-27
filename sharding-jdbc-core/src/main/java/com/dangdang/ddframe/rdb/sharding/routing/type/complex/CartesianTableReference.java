@@ -35,7 +35,8 @@ import java.util.List;
 public final class CartesianTableReference {
 
     /**
-     *  某个逻辑表的真实表集合组对应的TableUnit集合组
+     * 笛卡尔积表路由组，包含多条 TableUnit，即 TableUnit[0] x TableUnit[1] …… x TableUnit[n]。
+     * 例如：t_order_01 x t_order_item_02，最终转换成 SQL 为 SELECT * FROM t_order_01 o join t_order_item_02 i ON o.order_id = i.order_id。
      */
     private final List<TableUnit> tableUnits;
 }

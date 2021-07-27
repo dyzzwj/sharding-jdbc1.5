@@ -111,6 +111,9 @@ public final class ParsingSQLRouter implements SQLRouter {
         // SQL 重写
         SQLBuilder sqlBuilder = rewriteEngine.rewrite(!isSingleRouting);
         // 生成 ExecutionUnit
+        /**
+         * 对于笛卡尔积路由结果和简单路由结果传递的参数略有不同：前者使用 CartesianDataSource ( CartesianTableReference )，后者使用路由表单元 ( TableUnit )
+         */
         if (routingResult instanceof CartesianRoutingResult) {
             for (CartesianDataSource cartesianDataSource : ((CartesianRoutingResult) routingResult).getRoutingDataSources()) {
                 for (CartesianTableReference cartesianTableReference : cartesianDataSource.getRoutingTableReferences()) {

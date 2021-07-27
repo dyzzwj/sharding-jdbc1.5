@@ -53,7 +53,17 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * SQL执行引擎.
- * 
+ *
+ *  分表分库，需要执行的 SQL 数量从单条变成了多条，此时有两种方式执行：
+ *
+ * 串行执行 SQL
+ * 并行执行 SQL
+ * 前者，编码容易，性能较差，总耗时是多条 SQL 执行时间累加。
+ * 后者，编码复杂，性能较好，总耗时约等于执行时间最长的 SQL。
+ *
+ * 👼 ExecutorEngine 当然采用的是后者，并行执行 SQL。
+ *
+ *
  * @author gaohongtao
  * @author zhangliang
  */

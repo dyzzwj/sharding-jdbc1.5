@@ -27,9 +27,10 @@ import java.util.List;
 /**
  * 选择项标记对象.
  * 目前有三个地方产生：
- * 1. AVG 查询额外 COUNT 和 SUM
- * 2. GROUP BY 不在 查询字段，额外查询该字段
- * 3. ORDER BY 不在 查询字段，额外查询该字段
+ * 1. AVG 查询额外 COUNT 和 SUM  AVG查询列：SELECT AVG(price) FROM t_order 的 AVG(price)
+ * 2. GROUP BY 不在 查询字段，额外查询该字段 SELECT COUNT(order_id) FROM t_order GROUP BY user_id 的 user_id
+ * 3. ORDER BY 不在 查询字段，额外查询该字段 SELECT order_id FROM t_order ORDER BY create_time 的 create_time
+ * 4、自增主键未在插入列中：INSERT INTO t_order(nickname) VALUES ... 中没有自增列 order_id
  *
  * @author zhangliang
  */

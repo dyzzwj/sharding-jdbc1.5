@@ -78,6 +78,11 @@ public final class CartesianRoutingEngine implements RoutingEngine {
              * List<Set<TableUnit>> tableUnitGroups:每个元素是当前数据源 属于某个逻辑表的真实表集合组对应的TableUnit集合组
              *
              *   actualTableGroups和tableUnitGroups相同索引是一一对应的
+             *   actualTableGroups： 0 - [t_order_0,t_order_1]
+             *                      1 - [t_order_item_0,t_order_item_1]
+             *
+             *   tableUnitGroups   0 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_0)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_1)}]
+             *                     1 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_1)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_0)}]
              *
              */
             List<Set<TableUnit>> tableUnitGroups = toTableUnitGroups(entry.getKey(), actualTableGroups);
@@ -85,6 +90,13 @@ public final class CartesianRoutingEngine implements RoutingEngine {
             /**
              *  笛卡尔积，并合并结果
              *  同库 才可以进行笛卡尔积
+             *  计算笛卡尔积
+             *  Sets.cartesianProduct(tableUnitGroups):
+             *           0 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_0)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_1)}]
+             *         1 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_0)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_0)}]
+             *         2 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_1)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_1)}]
+             *         3 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_1)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_0)}]
+             *
              */
             result.merge(entry.getKey(), getCartesianTableReferences(Sets.cartesianProduct(tableUnitGroups)));
         }
@@ -174,10 +186,22 @@ public final class CartesianRoutingEngine implements RoutingEngine {
     }
     
     private List<CartesianTableReference> getCartesianTableReferences(final Set<List<TableUnit>> cartesianTableUnitGroups) {
+
+        /**
+         *  笛卡尔积，并合并结果
+         *  同库 才可以进行笛卡尔积
+         *  计算笛卡尔积
+         * cartesianTableUnitGroups：
+         *         0 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_0)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_1)}]
+         *         1 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_0)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_0)}]
+         *         2 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_1)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_1)}]
+         *         3 - [{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_1)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_0)}]
+         *
+         */
         List<CartesianTableReference> result = new ArrayList<>(cartesianTableUnitGroups.size());
 
         for (List<TableUnit> each : cartesianTableUnitGroups) {
-            //CartesianTableReference:某个逻辑表的真实表集合组对应的TableUnit集合组
+            //CartesianTableReference:[{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order, actualTableName=t_order_0)},{TableUnit(dataSourceName=ds_jdbc_1, logicTableName=t_order_item, actualTableName=t_order_item_1)}]
             result.add(new CartesianTableReference(each));
         }
         return result;

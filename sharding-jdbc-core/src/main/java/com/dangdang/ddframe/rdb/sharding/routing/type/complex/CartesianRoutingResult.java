@@ -47,6 +47,7 @@ public final class CartesianRoutingResult extends RoutingResult {
             //each:属于某个逻辑表的真实表集合组对应的TableUnit集合组
             merge(dataSource, each);
         }
+        System.out.println(routingDataSources);
     }
     
     private void merge(final String dataSource, final CartesianTableReference routingTableReference) {
@@ -54,7 +55,7 @@ public final class CartesianRoutingResult extends RoutingResult {
             //数据源相同
             if (each.getDataSource().equalsIgnoreCase(dataSource)) {
                 /**
-                 * 把相同数据源的属于某个逻辑表的真实表集合组对应的TableUnit集合组
+                 * 把相同数据源的routingTableReference
                  */
                 each.getRoutingTableReferences().add(routingTableReference);
                 return;

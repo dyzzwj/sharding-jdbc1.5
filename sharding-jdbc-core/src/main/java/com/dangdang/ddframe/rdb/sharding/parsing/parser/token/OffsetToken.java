@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 分页偏移量标记对象.
+ * 分页有偏移量，但不是占位符 但不是占位符 ?
  *
  * @author zhangliang
  */

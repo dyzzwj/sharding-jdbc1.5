@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 分页长度标记对象.
- *
+ *  分页有长度，但不是占位符 ?
  * @author zhangliang
  */
 @RequiredArgsConstructor

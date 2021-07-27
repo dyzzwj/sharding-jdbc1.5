@@ -25,7 +25,9 @@ import lombok.ToString;
 /**
  * 表标记对象.
  *
- * @author zhangliang
+ * 查询列的表别名：SELECT o.order_id 的 o
+ * 查询的表名：SELECT * FROM t_order 的 t_order
+ *
  */
 @RequiredArgsConstructor
 @Getter
