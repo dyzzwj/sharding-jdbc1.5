@@ -29,9 +29,12 @@ import lombok.RequiredArgsConstructor;
  * 词法解析器. 顺序解析sql 由于不同数据库遵守 SQL 规范略有不同，所以不同的数据库对应不同的 Lexer
  * 只做词法的解析，不关注上下文，将字符串拆解成 N 个词法
  *
- * SQL ：SELECT * FROM t_user
- * Lexer ：[SELECT] [ * ] [FROM] [t_user]
- * Parser ：这是一条 [SELECT] 查询表为 [t_user] ，并且返回 [ * ] 所有字段的 SQL。
+ * Lexer与Parser的关系：
+     * SQL ：SELECT * FROM t_user
+     * Lexer ：[SELECT] [ * ] [FROM] [t_user]
+     * Parser ：这是一条 [SELECT] 查询表为 [t_user] ，并且返回 [ * ] 所有字段的 SQL。
+ *
+ *  原理：顺序顺序顺序 解析 SQL，将字符串拆解成 N 个词法。
  *
  */
 @RequiredArgsConstructor
@@ -194,7 +197,7 @@ public class Lexer {
     }
 
     /**
-     * 是否是 符号
+     * 是否是 符号 例如：”{“, “}”, “>=” 等等
      *
      * @see Tokenizer#scanSymbol()
      * @return 是否

@@ -45,7 +45,14 @@ public final class MySQLLexer extends Lexer {
     protected boolean isCommentBegin() {
         return '#' == getCurrentChar(0) || super.isCommentBegin();
     }
-    
+
+    /**
+     * 扫描变量.
+     * 在 MySQL 里，@代表用户变量；@@代表系统变量。
+     * 在 SQLServer 里，有 @@。
+     *
+     * @return 变量标记
+     */
     @Override
     protected boolean isVariableBegin() {
         return '@' == getCurrentChar(0);

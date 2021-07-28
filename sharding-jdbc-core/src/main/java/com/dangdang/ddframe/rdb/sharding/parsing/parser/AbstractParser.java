@@ -31,6 +31,13 @@ import java.util.Set;
 
 /**
  * 解析器.
+ *  这里有一点我们需要注意，SQLParser 并不是等 Lexer 解析完词法( Token )，再根据词法去理解 SQL。而是，在理解 SQL 的过程中，调用 Lexer 进行分词。
+ * 还需要理解 SQL
+ *
+ * SQL ：SELECT * FROM t_user
+ * Lexer ：[SELECT] [ * ] [FROM] [t_user]
+ * Parser ：这是一条 [SELECT] 查询表为 [t_user] ，并且返回 [ * ] 所有字段的 SQL。
+ *
  *
  * @author zhangliang
  */
@@ -69,7 +76,7 @@ public abstract class AbstractParser {
                 if (equalAny(Symbol.QUESTION)) {
                     increaseParametersIndex();
                 }
-                // 到达结尾 或者 匹配合适数的)右括号
+                // 到达结尾 或者 匹配合适数的)右括号 count == 0
                 if (Assist.END == getLexer().getCurrentToken().getType() || (Symbol.RIGHT_PAREN == getLexer().getCurrentToken().getType() && 0 == count)) {
                     break;
                 }
@@ -112,6 +119,7 @@ public abstract class AbstractParser {
     
     /**
      * 判断当前词法标记类型是否与其中一个传入值相等.
+     *  判断当前词法是否为 SELECT。实际 AbstractParser 只知道当前词法，并不知道后面还有哪些词法，也不知道之前有哪些词法
      *
      * @param tokenTypes 待判断的词法标记类型
      * @return 是否有相等的词法标记类型

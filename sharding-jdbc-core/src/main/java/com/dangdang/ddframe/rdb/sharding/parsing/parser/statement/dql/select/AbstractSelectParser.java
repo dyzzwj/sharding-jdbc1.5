@@ -56,7 +56,8 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
     private static final String GROUP_BY_DERIVED_ALIAS = "GROUP_BY_DERIVED_%s";
     
     private final SQLParser sqlParser;
-    
+
+    //查询语句解析结果对象
     private final SelectStatement selectStatement;
     
     @Setter
@@ -83,7 +84,7 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
     /**
      * 解析 DISTINCT、DISTINCTROW、UNION、ALL
      * 此处的 DISTINCT 和 DISTINCT(字段) 不同，它是针对某行的。
-     * 例如 SELECT DISTINCT user_id FROM t_order 。此时即使一个用户有多个订单，这个用户也智慧返回一个 user_id。
+     * 例如 SELECT DISTINCT user_id FROM t_order 。此时即使一个用户有多个订单，这个用户也只会返回一个 user_id。
      */
     protected final void parseDistinct() {
         if (sqlParser.equalAny(DefaultKeyword.DISTINCT, DefaultKeyword.DISTINCTROW, DefaultKeyword.UNION)) {
@@ -107,7 +108,7 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
      */
     protected final void parseSelectList() {
         do {
-            // 解析 选择项
+            // 解析 单个选择项
             parseSelectItem();
         } while (sqlParser.skipIfEqual(Symbol.COMMA));
         // 设置 最后一个查询项下一个 Token 的开始位置
@@ -135,7 +136,15 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
             selectStatement.getItems().add(parseAggregationSelectItem(literals));
             return;
         }
-        // 第三种情况，非 * 通用选择项
+
+        /**
+         *  第三种情况  非 * 通用选择项：
+         * 例如，SELECT user_id FROM t_user
+         * 从实现上，逻辑会复杂很多。相比第一种，可以根据 * 做字段判断；相比第二种，可以使用 ( 和 ) 做字段判断。能够判断一个包含别名的 SelectItem 结束有 4 种 Token，根据结束方式我们分成 2 种：
+         *
+         * DefaultKeyword.AS ：能够接触出 SelectItem 字段，即不包含别名。例如，SELECT user_id AS uid FROM t_user，能够直接解析出 user_id。
+         * Symbol.COMMA / DefaultKeyword.FROM / Assist.END ：包含别名。例如，SELECT user_id uid FROM t_user，解析结果为 user_id uid。
+         */
         StringBuilder expression = new StringBuilder();
         Token lastToken = null;
         while (!sqlParser.equalAny(DefaultKeyword.AS) && !sqlParser.equalAny(Symbol.COMMA) && !sqlParser.equalAny(DefaultKeyword.FROM) && !sqlParser.equalAny(Assist.END)) {
@@ -165,6 +174,14 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
         throw new UnsupportedOperationException("Cannot support special select item.");
     }
 
+    /**
+     * * 通用选择项：
+     * 例如，SELECT * FROM t_user 的 *。
+     * 为什么要加 Symbol.STAR.getLiterals().equals(SQLUtil.getExactlyValue(literals)) 判断呢？
+     * SELECT `*` FROM t_user; // 也能达到查询所有字段的效果
+     * @param literals
+     * @return
+     */
     private boolean isStarSelectItem(final String literals) {
         return sqlParser.equalAny(Symbol.STAR) || Symbol.STAR.getLiterals().equals(SQLUtil.getExactlyValue(literals));
     }
@@ -175,6 +192,10 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
         return new CommonSelectItem(Symbol.STAR.getLiterals(), sqlParser.parseAlias());
     }
 
+    /**
+     * SELECT COUNT(user_id) FROM t_user 的 COUNT(user_id)
+     * @return
+     */
     private boolean isAggregationSelectItem() {
         return sqlParser.skipIfEqual(DefaultKeyword.MAX, DefaultKeyword.MIN, DefaultKeyword.SUM, DefaultKeyword.AVG, DefaultKeyword.COUNT);
     }
@@ -407,6 +428,48 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
 
     /**
      * 解析 Join Table 或者 FROM 下一张 Table
+     * // https://dev.mysql.com/doc/refman/5.7/en/join.html
+     * table_references:
+     *     escaped_table_reference [, escaped_table_reference] ...
+     *
+     * escaped_table_reference:
+     *     table_reference
+     *   | { OJ table_reference }
+     *
+     * table_reference:
+     *     table_factor
+     *   | join_table
+     *
+     * table_factor:
+     *     tbl_name [PARTITION (partition_names)]
+     *         [[AS] alias] [index_hint_list]
+     *   | table_subquery [AS] alias
+     *   | ( table_references )
+     *
+     * join_table:
+     *     table_reference [INNER | CROSS] JOIN table_factor [join_condition]
+     *   | table_reference STRAIGHT_JOIN table_factor
+     *   | table_reference STRAIGHT_JOIN table_factor ON conditional_expr
+     *   | table_reference {LEFT|RIGHT} [OUTER] JOIN table_reference join_condition
+     *   | table_reference NATURAL [{LEFT|RIGHT} [OUTER]] JOIN table_factor
+     *
+     * join_condition:
+     *     ON conditional_expr
+     *   | USING (column_list)
+     *
+     * index_hint_list:
+     *     index_hint [, index_hint] ...
+     *
+     * index_hint:
+     *     USE {INDEX|KEY}
+     *       [FOR {JOIN|ORDER BY|GROUP BY}] ([index_list])
+     *   | IGNORE {INDEX|KEY}
+     *       [FOR {JOIN|ORDER BY|GROUP BY}] (index_list)
+     *   | FORCE {INDEX|KEY}
+     *       [FOR {JOIN|ORDER BY|GROUP BY}] (index_list)
+     *
+     * index_list:
+     *     index_name [, index_name] ...
      */
     protected void parseJoinTable() {
         if (sqlParser.skipJoin()) {

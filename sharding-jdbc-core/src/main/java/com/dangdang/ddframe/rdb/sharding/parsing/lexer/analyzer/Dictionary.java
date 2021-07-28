@@ -37,6 +37,7 @@ public final class Dictionary {
     private final Map<String, Keyword> tokens = new HashMap<>(1024);
     
     public Dictionary(final Keyword... dialectKeywords) {
+
         fill(dialectKeywords);
     }
 

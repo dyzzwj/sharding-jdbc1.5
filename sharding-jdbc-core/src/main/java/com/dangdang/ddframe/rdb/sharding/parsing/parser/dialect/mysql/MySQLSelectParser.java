@@ -69,6 +69,7 @@ public class MySQLSelectParser extends AbstractSelectParser {
     public void query() {
         if (getSqlParser().equalAny(DefaultKeyword.SELECT)) {
             getSqlParser().getLexer().nextToken();
+            //distinct
             parseDistinct();
             getSqlParser().skipAll(MySQLKeyword.HIGH_PRIORITY, DefaultKeyword.STRAIGHT_JOIN, MySQLKeyword.SQL_SMALL_RESULT, MySQLKeyword.SQL_BIG_RESULT, MySQLKeyword.SQL_BUFFER_RESULT,
                     MySQLKeyword.SQL_CACHE, MySQLKeyword.SQL_NO_CACHE, MySQLKeyword.SQL_CALC_FOUND_ROWS);
