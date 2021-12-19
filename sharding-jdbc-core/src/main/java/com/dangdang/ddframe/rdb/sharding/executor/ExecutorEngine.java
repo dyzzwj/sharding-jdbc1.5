@@ -75,7 +75,9 @@ public final class ExecutorEngine implements AutoCloseable {
     public ExecutorEngine(final int executorSize) {
         executorService = MoreExecutors.listeningDecorator(new ThreadPoolExecutor(
                 executorSize, executorSize, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+                //#setNameFormat() 并发编程时，一定要对线程名字做下定义，这样排查问题会方便很多
                 new ThreadFactoryBuilder().setDaemon(true).setNameFormat("ShardingJDBC-%d").build()));
+        //，应用关闭时，等待所有任务全部完成再关闭。默认配置等待时间为 60 秒，建议将等待时间做成可配的。
         MoreExecutors.addDelayedShutdownHook(executorService, 60, TimeUnit.SECONDS); // TODO 疑问：会执行到么？数据
     }
     
@@ -153,6 +155,12 @@ public final class ExecutorEngine implements AutoCloseable {
              */
             firstOutput = syncExecute(sqlType, firstInput, parameterSets, executeCallback);
             // 等待第二个任务开始所有 SQL任务完成
+            /**
+             * 我们注意下 Futures.allAsList(result); 和 restOutputs = restFutures.get();
+             * 神器 Guava 简化并发编程 的好处就提现出来了。
+             * ListenableFuture#get() 当所有任务都成功时，返回所有任务执行结果；
+             * 当任何一个任务失败时，马上抛出异常，无需等待其他任务执行完成。
+             */
             restOutputs = restFutures.get();
             //CHECKSTYLE:OFF
         } catch (final Exception ex) {
@@ -193,7 +201,12 @@ public final class ExecutorEngine implements AutoCloseable {
     
     private <T> T executeInternal(final SQLType sqlType, final BaseStatementUnit baseStatementUnit, final List<List<Object>> parameterSets, final ExecuteCallback<T> executeCallback, 
                           final boolean isExceptionThrown, final Map<String, Object> dataMap) throws Exception {
+        /**
+         * ：MySQL、Oracle 的 Connection 实现是线程安全的。
+         * 数据库连接池实现的 Connection 不一定是线程安全，例如 Druid 的线程池 Connection 非线程安全
+         */
         synchronized (baseStatementUnit.getStatement().getConnection()) { // 可能拿到相同的 Connection，同步避免冲突
+
 //            System.out.println(baseStatementUnit.getStatement().getConnection() + "\t" + baseStatementUnit.getSqlExecutionUnit().getSql());
 
             T result;
@@ -213,7 +226,7 @@ public final class ExecutorEngine implements AutoCloseable {
                 EventBusInstance.getInstance().post(event);
             }
             try {
-                // 执行回调函数
+                // 执行回调函数 StatementExecutor，PreparedStatementExecutor，BatchPreparedStatementExecutor 通过传递执行回调函数( ExecuteCallback )实现给 ExecutorEngine 实现并行执行。
                 result = executeCallback.execute(baseStatementUnit);
             } catch (final SQLException ex) {
                 // EventBus 发布 EventExecutionType.EXECUTE_FAILURE

@@ -52,11 +52,14 @@ import java.util.List;
  * @author zhangiang
  */
 public final class ParsingSQLRouter implements SQLRouter {
-    
+
+    //分片规则
     private final ShardingRule shardingRule;
-    
+
+    //数据库类型
     private final DatabaseType databaseType;
-    
+
+    //是否显示sql
     private final boolean showSQL;
     
     private final List<Number> generatedKeys;
@@ -76,10 +79,13 @@ public final class ParsingSQLRouter implements SQLRouter {
      */
     @Override
     public SQLStatement parse(final String logicSQL, final int parametersSize) {
+        //构建sql解析引擎
         SQLParsingEngine parsingEngine = new SQLParsingEngine(databaseType, logicSQL, shardingRule);
         Context context = MetricsContext.start("Parse SQL");
+        //解析sql
         SQLStatement result = parsingEngine.parse();
         if (result instanceof InsertStatement) { // 处理 GenerateKeyToken
+            // 如果是insert操作，需要额外对主键做处理
             ((InsertStatement) result).appendGenerateKeyToken(shardingRule, parametersSize);
         }
         MetricsContext.stop(context);

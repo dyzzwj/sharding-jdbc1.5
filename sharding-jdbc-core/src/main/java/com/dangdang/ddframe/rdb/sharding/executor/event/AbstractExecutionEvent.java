@@ -52,6 +52,9 @@ public abstract class AbstractExecutionEvent {
     private final List<Object> parameters;
     /**
      * 事件类型
+     * BEFORE_EXECUTE：执行前
+     * EXECUTE_SUCCESS：执行成功
+     * EXECUTE_FAILURE：执行失败
      */
     private EventExecutionType eventExecutionType;
     /**

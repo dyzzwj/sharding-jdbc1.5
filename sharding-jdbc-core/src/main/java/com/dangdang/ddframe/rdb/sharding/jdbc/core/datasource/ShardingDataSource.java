@@ -56,6 +56,9 @@ public class ShardingDataSource extends AbstractDataSourceAdapter implements Aut
         Preconditions.checkNotNull(props);
         shardingProperties = new ShardingProperties(props);
         int executorSize = shardingProperties.getValue(ShardingPropertiesConstant.EXECUTOR_SIZE);
+        /**
+         * 一个分片数据源独占一个sql执行引擎
+         */
         executorEngine = new ExecutorEngine(executorSize);
         boolean showSQL = shardingProperties.getValue(ShardingPropertiesConstant.SQL_SHOW);
         try {
