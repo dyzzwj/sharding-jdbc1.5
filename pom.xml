@@ -18,7 +18,6 @@
         <module>sharding-jdbc-transaction-parent</module>
         <module>sharding-jdbc-example</module>
         <module>sharding-jdbc-plugin</module>
-        <module>zwj-sharding</module>
     </modules>
     
     <properties>
