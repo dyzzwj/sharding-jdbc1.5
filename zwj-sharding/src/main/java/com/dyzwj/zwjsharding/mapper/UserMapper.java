@@ -23,11 +23,14 @@ public interface UserMapper {
 
     List<User> selectIn(@Param("list") List<Integer> list);
 
-    @Select("select * from t_user where age > #{age}")
-    List<User> selectRange(Integer age );
+    @Select("select * from t_user where age > #{start} and age < #{end}")
+    List<User> selectRange(Integer start,Integer end);
 
     @Update("update t_user set nickname = #{nickname} where age = #{age}")
     int update(User user);
+
+    @Select("select * from t_user where age = #{age} and sex = #{sex}")
+    List<User> selectComplex(Integer age,Integer sex);
 
 
 

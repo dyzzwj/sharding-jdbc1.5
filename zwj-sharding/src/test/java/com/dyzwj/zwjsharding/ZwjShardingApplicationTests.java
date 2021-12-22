@@ -23,7 +23,7 @@ class ZwjShardingApplicationTests {
     @Test
     public void testInsert(){
         Random random = new Random();
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 5; i++) {
 
             int ageInt = random.nextInt(1000);
             int sexInt = random.nextInt(100);
@@ -57,6 +57,7 @@ class ZwjShardingApplicationTests {
         }
     }
 
+    //没有分片键 就走全库全表路由
     @Test
     public void testDelete(){
         userMapper.delete();
@@ -84,14 +85,17 @@ class ZwjShardingApplicationTests {
     }
 
 
-
     @Test
     public void testRange(){
-        List<User> result = userMapper.selectRange(50);
+        List<User> result = userMapper.selectRange(20,100);
         result.forEach(System.out::println);
-
     }
 
+    @Test
+    public void testComplex(){
+        List<User> result = userMapper.selectComplex(40, 1);
+        result.forEach(System.out::println);
+    }
 
 
 }
