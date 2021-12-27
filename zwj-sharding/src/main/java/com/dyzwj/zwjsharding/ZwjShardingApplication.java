@@ -9,8 +9,6 @@ import org.springframework.context.annotation.Bean;
 public class ZwjShardingApplication {
 
     public static void main(String[] args) {
-
-
         SpringApplication.run(ZwjShardingApplication.class, args);
     }
 

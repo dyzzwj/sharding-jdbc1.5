@@ -28,8 +28,10 @@ import lombok.Setter;
 @Getter
 @Setter
 public class GenerateKeyColumnConfig {
-    
+
+    //主键字段名
     private String columnName;
-    
+
+    //主键生成策略
     private String columnKeyGeneratorClass;
 }

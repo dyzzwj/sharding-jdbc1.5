@@ -33,14 +33,19 @@ import java.util.List;
 public class TableRuleConfig {
     
     private boolean dynamic;
-    
+
     private String actualTables;
     
     private String dataSourceNames;
-    
+
+    //分库策略
     private StrategyConfig databaseStrategy;
-    
+
+    //分表策略
     private StrategyConfig tableStrategy;
-    
+
+    /**
+     * 主键字段名及其生成策略
+     */
     private List<GenerateKeyColumnConfig> generateKeyColumns = new ArrayList<>();
 }

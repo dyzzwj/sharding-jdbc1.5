@@ -23,6 +23,11 @@ public class MyTableHintShardingAlgorithm implements HintShardingAlgorithm<Integ
     public Collection<String> doSharding(Collection<String> collection, HintShardingValue<Integer> hintShardingValue) {
 
         List<String> shardingResult = new ArrayList<>();
-        return null;
+        Collection<Integer> values = hintShardingValue.getValues();
+        for (Integer s : values) {
+            int index = s % collection.size();
+            shardingResult.add(collection.stream().filter(x -> x.endsWith(String.valueOf(index))).findFirst().get());
+        }
+        return shardingResult;
     }
 }

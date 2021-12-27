@@ -34,18 +34,30 @@ import java.util.Map;
 @Getter
 @Setter
 public class ShardingRuleConfig {
-    
+
+    /**
+     * 数据源集合
+     */
     private Map<String, DataSource> dataSource = new HashMap<>();
-    
+
+    //默认数据源名
     private String defaultDataSourceName;
-    
+
+    /**
+     * 表规则配置
+     */
     private Map<String, TableRuleConfig> tables = new HashMap<>();
-    
+
+    //绑定表规则配置
     private List<BindingTableRuleConfig> bindingTables = new ArrayList<>();
-    
+
+
     private StrategyConfig defaultDatabaseStrategy;
     
     private StrategyConfig defaultTableStrategy;
-    
+
+    /**
+     * 默认主键生成策略类名
+     */
     private String keyGeneratorClass;
 }

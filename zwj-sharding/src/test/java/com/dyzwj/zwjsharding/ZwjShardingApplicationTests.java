@@ -2,6 +2,7 @@ package com.dyzwj.zwjsharding;
 
 import com.dyzwj.zwjsharding.entity.User;
 import com.dyzwj.zwjsharding.mapper.UserMapper;
+import org.apache.shardingsphere.api.hint.HintManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -94,6 +95,24 @@ class ZwjShardingApplicationTests {
     @Test
     public void testComplex(){
         List<User> result = userMapper.selectComplex(40, 1);
+        result.forEach(System.out::println);
+    }
+
+    @Test
+    public void testHint(){
+        // 清除掉上一次的规则，否则会报错
+        HintManager.clear();
+        // Hint分片策略必须要使用 HintManager工具类
+        HintManager hintManager = HintManager.getInstance();
+
+        // 直接指定对应具体的数据库
+        hintManager.addDatabaseShardingValue("ds",0);
+//        hintManager.setDatabaseShardingValue();
+        // 设置表的分片健
+        hintManager.addTableShardingValue("t_user" , 0);
+        hintManager.addTableShardingValue("t_user" , 1);
+        hintManager.addTableShardingValue("t_user" , 2);
+        List<User> result = userMapper.selectAll();
         result.forEach(System.out::println);
     }
 

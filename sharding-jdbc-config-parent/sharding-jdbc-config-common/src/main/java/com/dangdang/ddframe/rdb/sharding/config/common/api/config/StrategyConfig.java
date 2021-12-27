@@ -28,10 +28,13 @@ import lombok.Setter;
 @Getter
 @Setter
 public class StrategyConfig {
-    
+
+    //分片键
     private String shardingColumns;
-    
+
+    //分片策略
     private String algorithmClassName;
-    
+
+    //分片表达式 (inline)
     private String algorithmExpression;
 }
