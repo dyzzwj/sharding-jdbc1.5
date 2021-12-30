@@ -3,6 +3,7 @@ package com.dyzwj.zwjsharding;
 import com.dyzwj.zwjsharding.entity.User;
 import com.dyzwj.zwjsharding.mapper.UserMapper;
 import org.apache.shardingsphere.api.hint.HintManager;
+import org.apache.shardingsphere.shardingjdbc.jdbc.core.statement.ShardingPreparedStatement;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -94,6 +95,7 @@ class ZwjShardingApplicationTests {
 
     @Test
     public void testComplex(){
+//        ShardingPreparedStatement
         List<User> result = userMapper.selectComplex(40, 1);
         result.forEach(System.out::println);
     }
